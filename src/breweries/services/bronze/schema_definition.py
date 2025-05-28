@@ -1,11 +1,11 @@
 from pyspark.sql.types import (
     StructType,
     StructField,
+    DoubleType,
     StringType
 )
 
-
-schema = StructType(
+bronze_schema_breweries_by_country = StructType(
         [
             StructField("id", StringType(), nullable=True),
             StructField("name", StringType(), nullable=True),
@@ -17,8 +17,8 @@ schema = StructType(
             StructField("state_province", StringType(), nullable=True),
             StructField("postal_code", StringType(), nullable=True),
             StructField("country", StringType(), nullable=True),
-            StructField("longitude", StringType(), nullable=True),
-            StructField("latitude", StringType(), nullable=True),
+            StructField("longitude", DoubleType(), nullable=True),
+            StructField("latitude", DoubleType(), nullable=True),
             StructField("phone", StringType(), nullable=True),
             StructField("website_url", StringType(), nullable=True),
             StructField("state", StringType(), nullable=True),

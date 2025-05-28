@@ -1,0 +1,17 @@
+{
+  "S3_PATH_LOG_URI": "CHANGE_ME",
+  "COST_CENTER": "CHANGE_ME",
+  "CUSTOM2": "CHANGE_ME",
+  "CATEGORY": "CHANGE_ME",
+  "CUSTOM1": "CHANGE_ME",
+  "JOB_FLOW_ROLE": "CHANGE_ME",
+  "EMR_SERVICE_ROLE": "CHANGE_ME",
+  "ENCRYPTION_KEY": "CHANGE_ME",
+  "IAM_ROLE": "CHANGE_ME",
+  "REGION_NAME": "CHANGE_ME",
+  "SUBNET_ID": "CHANGE_ME",
+  "EmrManagedMasterSecurityGroup": "CHANGE_ME",
+  "EmrManagedSlaveSecurityGroup": "CHANGE_ME",
+  "ServiceAccessSecurityGroup": "CHANGE_ME",
+  "S3_BASE_PATH": "CHANGE_ME"
+}

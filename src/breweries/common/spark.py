@@ -45,6 +45,10 @@ class SparkSessionFactory(object):
         )
         conf.set("spark.sql.caseSensitive", "true")
 
+        # DELTA
+        conf.set("spark.jars.packages", "io.delta:delta-core_2.12:2.3.0")
+        conf.set("spark.jars.packages", "io.delta:delta-storage:2.3.0")
+
         if "3.3" in pyspark.__version__:
             # Performance
             conf.set("spark.driver.memory", "20g")

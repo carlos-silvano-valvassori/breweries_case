@@ -1,0 +1,226 @@
+{
+    "Job": {
+        "Name": "abi.services",
+        "LogUri": "s3://<<S3_PATH_LOG_URI>>",
+        "ReleaseLabel": "emr-6.10.1",
+        "Applications": [
+            {
+                "Name": "Spark"
+            },
+            {
+                "Name": "Hive"
+            },
+            {
+                "Name": "JupyterEnterpriseGateway"
+            },
+            {
+                "Name": "JupyterHub"
+            }
+        ],
+        "Tags": [
+            {
+                "Key": "Custom4",
+                "Value": "Yes"
+            },
+            {
+                "Key": "Custom3",
+                "Value": "NA"
+            },
+            {
+                "Key": "CostManagement",
+                "Value": "CostCenter:<<COST_CENTER>>"
+            },
+            {
+                "Key": "Custom2",
+                "Value": "<<CUSTOM2>>"
+            },
+            {
+                "Key": "Owner",
+                "Value": "<OWNER>"
+            },
+            {
+                "Key": "Category",
+                "Value": "<<CATEGORY>>"
+            },
+            {
+                "Key": "Custom1",
+                "Value": "<<CUSTOM1>>"
+            },
+            {
+                "Key": "department",
+                "Value": "department_test"
+            }
+        ],
+        "JobFlowRole": "<<JOB_FLOW_ROLE>>",
+        "ServiceRole": "<<EMR_SERVICE_ROLE>>",
+        "VisibleToAllUsers": true,
+        "Configurations": [
+            {
+                "Classification": "spark-defaults",
+                "Properties": {
+                      "spark.databricks.delta.retentionDurationCheck.enabled": "False",
+                      "spark.eventLog.enabled": "true",
+                      "spark.executor.cores": "12",
+                      "spark.executor.instances": "16",
+                      "spark.scheduler.mode": "FIFO",
+                      "spark.serializer": "org.apache.spark.serializer.KryoSerializer",
+                      "spark.sql.orc.filterPushdown": "true",
+                      "spark.sql.shuffle.partitions": "256",
+                      "spark.yarn.appMasterEnv.ENV": "PRODUCTION",
+                      "spark.yarn.appMasterEnv.REGION_NAME": "<<REGION_NAME>>",
+                      "spark.yarn.appMasterEnv.IAM_ROLE": "<<IAM_ROLE>>"
+                }
+            },
+            {
+                "Classification": "spark",
+                 "Properties": {
+                     "maximizeResourceAllocation": "true"
+                 }
+            },
+            {
+                "Classification": "emrfs-site",
+                "Properties": {
+                    "fs.s3.serverSideEncryption.kms.keyId": "<<ENCRYPTION_KEY>>",
+                    "fs.s3.enableServerSideEncryption": "true"
+                },
+                "Configurations": []
+            },
+            {
+                "Classification": "spark-env",
+                "Configurations": [
+                    {
+                        "Classification": "export",
+                        "Properties": {
+                              "ENV": "PRODUCTION",
+                              "IAM_ROLE": "<<IAM_ROLE>>",
+                              "REGION_NAME": "<<REGION_NAME>>"
+                        }
+                    }
+                ],
+                "Properties": {}
+            }
+        ],
+        "Instances": {
+            "Ec2KeyName": "ta.stable",
+            "KeepJobFlowAliveWhenNoSteps": true,
+            "Ec2SubnetIds": [
+                "<<SUBNET_ID>>"
+            ],
+            "EmrManagedMasterSecurityGroup": "<<EmrManagedMasterSecurityGroup>>",
+            "EmrManagedSlaveSecurityGroup": "<<EmrManagedSlaveSecurityGroup>>",
+            "ServiceAccessSecurityGroup": "<<ServiceAccessSecurityGroup>>",
+            "AdditionalSlaveSecurityGroups": [],
+            "AdditionalMasterSecurityGroups": [],
+            "InstanceFleets": [
+                {
+                    "Name": "Masterfleet",
+                    "InstanceFleetType": "MASTER",
+                    "TargetOnDemandCapacity": 1,
+                    "InstanceTypeConfigs": [
+                        {
+                            "InstanceType": "r5d.16xlarge"
+                        }
+                    ]
+                },
+                {
+                    "Name": "Corefleet",
+                    "InstanceFleetType": "CORE",
+                    "TargetOnDemandCapacity": 2,
+                    "InstanceTypeConfigs": [
+                        {
+                            "InstanceType": "i3.8xlarge"
+                        }
+                    ]
+                }
+            ]
+        },
+        "ManagedScalingPolicy": {
+            "ComputeLimits": {
+                "MinimumCapacityUnits": 10,
+                "MaximumCapacityUnits": 16,
+                "MaximumCoreCapacityUnits": 10,
+                "MaximumOnDemandCapacityUnits": 16,
+                "UnitType": "InstanceFleetUnits"
+            }
+        },
+        "BootstrapActions": [
+            {
+                "Name": "ABI Bootstrap",
+                "ScriptBootstrapAction": {
+                    "Path": "<<S3_BASE_PATH>>/brewery_boostrap.sh",
+                    "Args": []
+                }
+            }
+        ],
+        "AutoTerminationPolicy" : {
+            "IdleTimeout": 60
+            },
+        "Steps": [
+            {
+                "Name": "Download Delta Core Dependencies",
+                "HadoopJarStep": {
+                    "Jar": "command-runner.jar",
+                    "Args": [
+                        "sudo",
+                        "wget",
+                        "https://repo1.maven.org/maven2/io/delta/delta-core_2.12/2.3.0/delta-core_2.12-2.3.0.jar",
+                        "-P",
+                        "/home/hadoop/"
+                    ]
+                },
+                "ActionOnFailure": "CONTINUE"
+            },
+            {
+                  "Name": "Bronze Execution",
+                  "HadoopJarStep": {
+                      "Jar": "command-runner.jar",
+                      "Args": [
+                          "spark-submit",
+                          "--deploy-mode",
+                          "client",
+                          "--py-files",
+                          "<<S3_BASE_PATH>>/breweries.zip",
+                          "<<S3_BASE_PATH>>/main-data-eng.py",
+                          "--service",
+                          "ABIInbevBronzeService"
+                      ]
+                  },
+                  "ActionOnFailure": "CONTINUE"
+            },
+            {
+                  "Name": "Silver Execution",
+                  "HadoopJarStep": {
+                      "Jar": "command-runner.jar",
+                      "Args": [
+                          "spark-submit",
+                          "--deploy-mode",
+                          "client",
+                          "--py-files",
+                          "<<S3_BASE_PATH>>/breweries.zip",
+                          "<<S3_BASE_PATH>>/main-data-eng.py",
+                          "--service",
+                          "ABIInbevSilverService"
+                      ]
+                  },
+                  "ActionOnFailure": "CONTINUE"
+            },
+            {
+                  "Name": "Gold Execution",
+                  "HadoopJarStep": {
+                      "Jar": "command-runner.jar",
+                      "Args": [
+                          "spark-submit",
+                          "--deploy-mode",
+                          "client",
+                          "--py-files",
+                          "<<S3_BASE_PATH>>/breweries.zip",
+                          "<<S3_BASE_PATH>>/main-data-eng.py",
+                          "--service",
+                          "ABIInbevGoldService"
+                      ]
+                  },
+                  "ActionOnFailure": "CONTINUE"
+            }
+        ]
+    }
+}
